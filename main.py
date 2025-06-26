@@ -21,8 +21,10 @@ for img in imagenet:
     images.append(permuted)
     labels.append(img['label'])
 
+print(len(images))
+
 # creating the nn API
-device = "cuda" if torch.cuda.is_available() else "mps"
+device = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
 g = torch.Generator(device=device).manual_seed(42)
 
 class Conv:
@@ -111,7 +113,7 @@ for p in params:
 # training loop
 for epoch in range(num_of_epochs):
     # sampling a random batch
-    randomIndecies = [random.randint(0, 10000) for _ in range(batch_size)]
+    randomIndecies = [random.randint(0, 10000-1) for _ in range(batch_size)]
     image_batch = []
     ans = []
     for i in randomIndecies:
