@@ -22,8 +22,8 @@ for img in imagenet:
     labels.append(img['label'])
 
 # creating the nn API
-device = "cuda" if torch.cuda.is_available() else "cpu"
-g = torch.manual_seed(42)
+device = "cuda" if torch.cuda.is_available() else "mps"
+g = torch.Generator(device=device).manual_seed(42)
 
 class Conv:
   def __init__(self, num_of_kernels, channels_in, kernel_size, stride, padding):
@@ -118,8 +118,8 @@ for epoch in range(num_of_epochs):
         image_batch.append(images[i])
         ans.append(labels[i])
 
-    image_batch = torch.tensor(image_batch).to(torch.float32)
-    ans = torch.tensor(ans)
+    image_batch = torch.tensor(image_batch).to(torch.float32).to(device)
+    ans = torch.tensor(ans).to(device)
 
     # forward pass
     def forward(image_batch):
@@ -130,6 +130,7 @@ for epoch in range(num_of_epochs):
 
     # backward pass
     def backward(logits, ans):
+        global learning_rate
         loss = torch.nn.functional.cross_entropy(logits, ans)
         print(f"epoch {epoch}, loss = {loss}")
 
