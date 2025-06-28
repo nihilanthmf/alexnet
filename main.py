@@ -1,26 +1,28 @@
-from datasets import load_dataset
 import torch
 import random
 import numpy as np
 import matplotlib.pyplot as plt
+import os
+from PIL import Image
 
-# loading the dataset
-imagenet = load_dataset(
-  'Maysee/tiny-imagenet', 
-  split='valid',
-)
+# listing the paths for all images
+all_files = [f for f in os.listdir("images")]
 
-# preprocessing the dataset (converting to RGB and to tensors)
-images = []
-labels = []
+# extracting indices from filenames
+index_to_file = {}
 
-for img in imagenet:
-  rbgImg = img['image'].convert('RGB')
-  resizedImg = rbgImg.resize((227, 227))
-  pixels = np.array(resizedImg).astype(np.float32) / 255.0
-  permuted = np.transpose(pixels, (2, 0, 1))
-  images.append(permuted)
-  labels.append(img['label'])
+# function to load the images on the fly (convert to RGB and to tensors)
+def load_image(index):
+  img_path = all_files[index]
+  label, index_str = img_path.split('.', 1)
+
+  img = Image.open(f"images/{img_path}")
+
+  img = img.convert('RGB').resize((227, 227))
+  pixels = np.array(img).astype(np.float32) / 255.0
+  image = np.transpose(pixels, (2, 0, 1))
+
+  return image, int(label)
 
 # creating the nn API
 device = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
@@ -83,7 +85,7 @@ class ReLU:
 # initializing the NN
 batch_size = 16
 learning_rate = 0.0001
-num_of_epochs = 10
+num_of_epochs = 10_000
 
 layers = [
   Conv(num_of_kernels=96, channels_in=3, kernel_size=11, stride=4, padding=0), ReLU(), Pooling(kernel_size=3, stride=2),
@@ -119,10 +121,11 @@ for epoch in range(num_of_epochs):
   image_batch = []
   ans = []
   for i in randomIndecies:
-    image_batch.append(images[i])
-    ans.append(labels[i])
+    image, label = load_image(i)
+    image_batch.append(image)
+    ans.append(label)
 
-  image_batch = torch.tensor(image_batch).to(torch.float32).to(device)
+  image_batch = torch.tensor(image_batch).to(device)
   ans = torch.tensor(ans).to(device)
 
   # forward pass
