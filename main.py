@@ -150,9 +150,11 @@ for epoch in range(num_of_epochs):
   backward(logits, ans)
 
 def save_params():
-  for layer in layers:
+  for i in range(len(layers)):
+    layer = layers[i]
     layer_params = layer.parameters()
+    layer_params = [p.detach().cpu() for p in layer_params]
     if layer_params:
-      torch.save(layer_params, f"params/{layer}.pth")
+      torch.save(layer_params, f"params/layer_{i}.pth")
 
 save_params()
