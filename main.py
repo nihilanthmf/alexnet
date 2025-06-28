@@ -2,6 +2,8 @@ from datasets import load_dataset
 import torch
 import random
 import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 
 # loading the dataset
 imagenet = load_dataset(
@@ -16,7 +18,7 @@ labels = []
 for img in imagenet:
     rbgImg = img['image'].convert('RGB')
     resizedImg = rbgImg.resize((227, 227))
-    pixels = np.array(resizedImg)
+    pixels = np.array(resizedImg).astype(np.float32) / 255.0
     permuted = np.transpose(pixels, (2, 0, 1))
     images.append(permuted)
     labels.append(img['label'])
@@ -85,16 +87,16 @@ class ReLU:
     return []
   
 # initializing the NN
-batch_size = 32
+batch_size = 16
 learning_rate = 0.01
 num_of_epochs = 100_000
 
 layers = [
   Conv(num_of_kernels=96, channels_in=3, kernel_size=11, stride=4, padding=0), ReLU(), Pooling(kernel_size=3, stride=2),
   Conv(num_of_kernels=256, channels_in=96, kernel_size=5, stride=1, padding=2), ReLU(), Pooling(kernel_size=3, stride=2),
-  Conv(num_of_kernels=384, channels_in=256, kernel_size=3, stride=1, padding=1), ReLU(),
-  Conv(num_of_kernels=384, channels_in=384, kernel_size=3, stride=1, padding=1), ReLU(),
-  Conv(num_of_kernels=256, channels_in=384, kernel_size=3, stride=1, padding=1), ReLU(), Pooling(kernel_size=3, stride=2),
+  # Conv(num_of_kernels=384, channels_in=256, kernel_size=3, stride=1, padding=1), ReLU(),
+  # Conv(num_of_kernels=384, channels_in=384, kernel_size=3, stride=1, padding=1), ReLU(),
+  Conv(num_of_kernels=256, channels_in=256, kernel_size=3, stride=1, padding=1), ReLU(), Pooling(kernel_size=3, stride=2),
   Flatten(batch_size),
   Linear(fan_in=9216, fan_out=4096), ReLU(),
   Linear(fan_in=4096, fan_out=4096), ReLU(),
@@ -109,6 +111,15 @@ for layer in layers:
 
 for p in params:
     p.requires_grad = True
+
+for p in params:
+    p.requires_grad = True
+
+def activation_plot(tensor):
+    # black = false; white = true
+    h_detached = tensor.cpu().detach().view(132, -1)
+    plt.imshow(h_detached <= 0, cmap="gray", vmin=0, vmax=1) 
+    plt.show()
 
 # training loop
 for epoch in range(num_of_epochs):
@@ -127,6 +138,7 @@ for epoch in range(num_of_epochs):
     def forward(image_batch):
         for layer in layers:
             image_batch = layer(image_batch)
+            # activation_plot(params[0])
             # print(layer, image_batch.shape)
         return image_batch
 
