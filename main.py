@@ -27,6 +27,7 @@ def load_image(index):
 # creating the nn API
 device = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
 g = torch.Generator(device=device).manual_seed(42)
+evaluation_mode = True
 
 class Conv:
   def __init__(self, num_of_kernels, channels_in, kernel_size, stride, padding):
@@ -85,7 +86,7 @@ class ReLU:
 # initializing the NN
 batch_size = 16
 learning_rate = 0.0001
-num_of_epochs = 10_000
+num_of_epochs = 30_000
 
 layers = [
   Conv(num_of_kernels=96, channels_in=3, kernel_size=11, stride=4, padding=0), ReLU(), Pooling(kernel_size=3, stride=2),
