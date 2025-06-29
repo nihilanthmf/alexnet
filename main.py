@@ -136,7 +136,7 @@ def forward(image_batch):
   return image_batch
 
 if (evaluation_mode):
-  test_images = load_eval_images()[:100]
+  test_images = load_eval_images()[:1000]
   image_batch = []
   ans = []
 
@@ -165,7 +165,7 @@ else:
   # training loop
   for epoch in range(num_of_epochs):
     # sampling a random batch
-    randomIndecies = [random.randint(0, 10000-1) for _ in range(batch_size)]
+    randomIndecies = [random.randint(0, 100000-1) for _ in range(batch_size)]
     image_batch = []
     ans = []
     for i in randomIndecies:
