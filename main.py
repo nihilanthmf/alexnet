@@ -99,7 +99,8 @@ class ReLU:
 # initializing the NN
 batch_size = 16
 learning_rate = 0.00001
-num_of_epochs = 30_000
+learning_rate_decay = 0.000005
+num_of_epochs = 50_000
 
 layers = [
   Conv(num_of_kernels=96, channels_in=3, kernel_size=11, stride=4, padding=0, weights_file_name="layer_0"), ReLU(), Pooling(kernel_size=3, stride=2),
@@ -184,6 +185,9 @@ else:
         p.grad = None
 
       loss.backward()
+
+      if epoch > 35_000:
+        learning_rate = learning_rate_decay
 
       for p in params:
         p.data -= p.grad * learning_rate
