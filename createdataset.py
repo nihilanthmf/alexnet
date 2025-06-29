@@ -6,11 +6,6 @@ training_split = load_dataset(
   split="train"
 )
 
-test_split = load_dataset(
-  'Maysee/tiny-imagenet', 
-  split="valid"
-)
-
 for index in range(len(training_split)):
   img = training_split[index]
 
