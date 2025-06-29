@@ -44,7 +44,7 @@ evaluation_mode = False
 
 class Conv:
   def __init__(self, num_of_kernels, channels_in, kernel_size, stride, padding, weights_file_name):
-    self.weight = torch.load(f"inference_params/{weights_file_name}.pth")[0] if evaluation_mode else torch.randn((num_of_kernels, channels_in, kernel_size, kernel_size), generator=g, device=device) * 0.1
+    self.weight = torch.load(f"inference_params/{weights_file_name}.pth")[0] if evaluation_mode else torch.randn((num_of_kernels, channels_in, kernel_size, kernel_size), generator=g, device=device) * 0.05
     self.stride = stride
     self.padding = padding
   
@@ -98,7 +98,7 @@ class ReLU:
   
 # initializing the NN
 batch_size = 16
-learning_rate = 0.00001
+learning_rate = 1e-6
 learning_rate_decay = 0.000005
 num_of_epochs = 50_000
 
@@ -125,7 +125,7 @@ for p in params:
 
 def activation_plot(tensor):
   # black = false; white = true
-  h_detached = tensor.cpu().detach().view(132, -1)
+  h_detached = tensor.cpu().detach().view(200, -1)
   plt.imshow(h_detached <= 0, cmap="gray", vmin=0, vmax=1) 
   plt.show()
 
@@ -193,9 +193,15 @@ else:
         p.data -= p.grad * learning_rate
     
     logits = forward(image_batch)
+
     loss = torch.nn.functional.cross_entropy(logits, ans)
     print(f"epoch {epoch}, loss = {loss}")
     backward(loss)
+
+  # print(plot_values)
+  # plt.plot(plot_values)
+  # plt.grid(True)
+  # plt.show()
 
   def save_params():
     for i in range(len(layers)):
