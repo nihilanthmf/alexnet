@@ -7,7 +7,13 @@ from PIL import Image
 from datasets import load_dataset
 
 # listing the paths for all images
-all_files = [f for f in os.listdir("images")]
+# all_files = [f for f in os.listdir("images")][:1000]
+def sort_key(filename):
+    name = filename.rsplit('.', 1)[0]
+    cls, idx = map(int, name.split('.'))
+    return (cls, idx)
+
+all_files = sorted(os.listdir("images"), key=sort_key)[:100000]
 
 # extracting indices from filenames
 index_to_file = {}
@@ -44,7 +50,7 @@ evaluation_mode = False
 
 class Conv:
   def __init__(self, num_of_kernels, channels_in, kernel_size, stride, padding, weights_file_name):
-    self.weight = torch.load(f"inference_params/{weights_file_name}.pth")[0] if evaluation_mode else torch.randn((num_of_kernels, channels_in, kernel_size, kernel_size), generator=g, device=device) * 0.05
+    self.weight = torch.load(f"inference_params/{weights_file_name}.pth")[0] if evaluation_mode else torch.randn((num_of_kernels, channels_in, kernel_size, kernel_size), generator=g, device=device) * (1.0 / (channels_in * kernel_size ** 2) ** 0.5)
     self.stride = stride
     self.padding = padding
   
@@ -98,8 +104,8 @@ class ReLU:
   
 # initializing the NN
 batch_size = 16
-learning_rate = 1e-6
-learning_rate_decay = 0.000005
+learning_rate = 1e-3
+learning_rate_decay = 5e-5
 num_of_epochs = 50_000
 
 layers = [
@@ -166,7 +172,7 @@ else:
   # training loop
   for epoch in range(num_of_epochs):
     # sampling a random batch
-    randomIndecies = [random.randint(0, 100000-1) for _ in range(batch_size)]
+    randomIndecies = [random.randint(0, len(all_files) - 1) for _ in range(batch_size)]
     image_batch = []
     ans = []
     for i in randomIndecies:
@@ -191,8 +197,11 @@ else:
 
       for p in params:
         p.data -= p.grad * learning_rate
-    
+
     logits = forward(image_batch)
+
+    # print(torch.argmax(logits, dim=1))
+    # print(ans)
 
     loss = torch.nn.functional.cross_entropy(logits, ans)
     print(f"epoch {epoch}, loss = {loss}")
