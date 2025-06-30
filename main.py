@@ -46,11 +46,11 @@ def load_eval_images():
 # creating the nn API
 device = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
 g = torch.Generator(device=device).manual_seed(42)
-evaluation_mode = False
+evaluation_mode = True
 
 class Conv:
   def __init__(self, num_of_kernels, channels_in, kernel_size, stride, padding, weights_file_name):
-    self.weight = torch.load(f"inference_params/{weights_file_name}.pth")[0] if evaluation_mode else torch.randn((num_of_kernels, channels_in, kernel_size, kernel_size), generator=g, device=device) * (1.0 / (channels_in * kernel_size ** 2) ** 0.5)
+    self.weight = torch.load(f"inference_params/{weights_file_name}.pth")[0].to(device) if evaluation_mode else torch.randn((num_of_kernels, channels_in, kernel_size, kernel_size), generator=g, device=device) * (1.0 / (channels_in * kernel_size ** 2) ** 0.5)
     self.stride = stride
     self.padding = padding
   
@@ -83,8 +83,8 @@ class Flatten:
 
 class Linear:
   def __init__(self, fan_in, fan_out, weights_file_name, bias=True):
-    self.weight =  torch.load(f"inference_params/{weights_file_name}.pth")[0] if evaluation_mode else torch.randn((fan_in, fan_out), generator=g, device=device) / fan_in**0.5
-    self.bias = torch.load(f"inference_params/{weights_file_name}.pth")[1] if evaluation_mode else torch.zeros(fan_out, device=device) if bias else None
+    self.weight =  torch.load(f"inference_params/{weights_file_name}.pth")[0].to(device) if evaluation_mode else torch.randn((fan_in, fan_out), generator=g, device=device) / fan_in**0.5
+    self.bias = torch.load(f"inference_params/{weights_file_name}.pth")[1].to(device) if evaluation_mode else torch.zeros(fan_out, device=device) if bias else None
   
   def __call__(self, x):
     self.out = x @ self.weight
@@ -156,8 +156,9 @@ if (evaluation_mode):
     image_batch.append(image)
     ans.append(label)
 
-  image_batch = torch.tensor(image_batch)#.to(device)
-  ans = torch.tensor(ans)#.to(device)
+  image_batch = torch.tensor(np.array(image_batch)).to(device)
+  ans = torch.tensor(np.array(ans)).to(device)
+
   logits = forward(image_batch)
 
   loss = torch.nn.functional.cross_entropy(logits, ans)
