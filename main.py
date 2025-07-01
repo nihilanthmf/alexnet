@@ -1,10 +1,12 @@
+import numpy as np
 import torch
 import random
-import numpy as np
 import matplotlib.pyplot as plt
 import os
 from PIL import Image
 from datasets import load_dataset
+import os
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 # listing the paths for all images
 # all_files = [f for f in os.listdir("images")][:1000]
@@ -103,10 +105,10 @@ class ReLU:
     return []
   
 # initializing the NN
-batch_size = 16
+batch_size = 8
 learning_rate = 1e-3
 learning_rate_decay = 5e-5
-num_of_epochs = 40_000
+num_of_epochs = 30_000
 
 layers = [
   Conv(num_of_kernels=96, channels_in=3, kernel_size=11, stride=4, padding=0, weights_file_name="layer_0"), ReLU(), Pooling(kernel_size=3, stride=2),
@@ -128,12 +130,6 @@ for layer in layers:
 
 for p in params:
   p.requires_grad = True
-
-def activation_plot(tensor):
-  # black = false; white = true
-  h_detached = tensor.cpu().detach().view(200, -1)
-  plt.imshow(h_detached <= 0, cmap="gray", vmin=0, vmax=1) 
-  plt.show()
 
 # forward pass
 def forward(image_batch):
@@ -216,7 +212,7 @@ else:
     loss = torch.nn.functional.cross_entropy(logits, ans)
     print(f"epoch {epoch}, loss = {loss}")
 
-    if epoch % 100 == 0:
+    if epoch % 50 == 0:
       training_loss_valuse.append(np.mean(current_training_loss_values))
       eval_loss_values.append(np.mean(current_eval_loss_values))
     else:
