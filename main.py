@@ -46,7 +46,7 @@ def load_eval_images():
 # creating the nn API
 device = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
 g = torch.Generator(device=device).manual_seed(42)
-evaluation_mode = True
+evaluation_mode = False
 
 class Conv:
   def __init__(self, num_of_kernels, channels_in, kernel_size, stride, padding, weights_file_name):
@@ -106,7 +106,7 @@ class ReLU:
 batch_size = 16
 learning_rate = 1e-3
 learning_rate_decay = 5e-5
-num_of_epochs = 50_000
+num_of_epochs = 40_000
 
 layers = [
   Conv(num_of_kernels=96, channels_in=3, kernel_size=11, stride=4, padding=0, weights_file_name="layer_0"), ReLU(), Pooling(kernel_size=3, stride=2),
@@ -142,14 +142,19 @@ def forward(image_batch):
 
   return image_batch
 
-if (evaluation_mode):
-  test_images = load_eval_images()[:1000]
+training_loss_valuse = []
+eval_loss_values = []
+eval_images = load_eval_images()[:5000]
+
+current_training_loss_values=[]
+current_eval_loss_values=[]
+
+def get_eval_result(indecies, imgs):
   image_batch = []
   ans = []
-
-  for i in range(len(test_images['image'])):
-    image = test_images['image'][i]
-    label = test_images['label'][i]
+  for i in indecies:
+    image = imgs['image'][i]
+    label = imgs['label'][i]
 
     image = process_image(image)
 
@@ -160,6 +165,13 @@ if (evaluation_mode):
   ans = torch.tensor(np.array(ans)).to(device)
 
   logits = forward(image_batch)
+
+  return logits, image_batch, ans
+
+if (evaluation_mode):
+  test_images = load_eval_images()[:1000]
+
+  logits, image_batch, ans = get_eval_result(range(len(test_images['image'])), test_images)
 
   loss = torch.nn.functional.cross_entropy(logits, ans)
   print("eval loss =", loss)
@@ -201,17 +213,37 @@ else:
 
     logits = forward(image_batch)
 
-    # print(torch.argmax(logits, dim=1))
-    # print(ans)
-
     loss = torch.nn.functional.cross_entropy(logits, ans)
     print(f"epoch {epoch}, loss = {loss}")
+
+    if epoch % 100 == 0:
+      training_loss_valuse.append(np.mean(current_training_loss_values))
+      eval_loss_values.append(np.mean(current_eval_loss_values))
+    else:
+      current_training_loss_values.append(loss.item())
+
+      randomIndecies = [random.randint(0, len(eval_images["image"]) - 1) for _ in range(batch_size)]
+      logits, _, ans = get_eval_result(randomIndecies, eval_images)
+
+      eval_loss = torch.nn.functional.cross_entropy(logits, ans)
+
+      current_eval_loss_values.append(eval_loss.item())
+
     backward(loss)
 
-  # print(plot_values)
-  # plt.plot(plot_values)
-  # plt.grid(True)
-  # plt.show()
+  # Create plot
+  plt.plot(list(range(len(training_loss_valuse))), training_loss_valuse, label='Training loss', marker='o')
+  plt.plot(list(range(len(eval_loss_values))), eval_loss_values, label='Eval loss', marker='x')
+
+  # Add labels and title
+  plt.xlabel('Time')
+  plt.ylabel('Value')
+  plt.title('Sensor Data Over Time')
+  plt.legend()
+  plt.grid(True)
+
+  # Show plot
+  plt.show()
 
   def save_params():
     for i in range(len(layers)):
