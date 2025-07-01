@@ -106,9 +106,9 @@ class ReLU:
   
 # initializing the NN
 batch_size = 8
-learning_rate = 1e-3
-learning_rate_decay = 5e-5
-num_of_epochs = 30_000
+learning_rate = 5e-2
+learning_rate_decay = 8e-4
+num_of_epochs = 100_000
 
 layers = [
   Conv(num_of_kernels=96, channels_in=3, kernel_size=11, stride=4, padding=0, weights_file_name="layer_0"), ReLU(), Pooling(kernel_size=3, stride=2),
@@ -201,7 +201,7 @@ else:
 
       loss.backward()
 
-      if epoch > 35_000:
+      if epoch > 80_000:
         learning_rate = learning_rate_decay
 
       for p in params:
@@ -212,7 +212,7 @@ else:
     loss = torch.nn.functional.cross_entropy(logits, ans)
     print(f"epoch {epoch}, loss = {loss}")
 
-    if epoch % 50 == 0:
+    if epoch % 200 == 0:
       training_loss_valuse.append(np.mean(current_training_loss_values))
       eval_loss_values.append(np.mean(current_eval_loss_values))
     else:
