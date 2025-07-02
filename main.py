@@ -105,9 +105,10 @@ class ReLU:
     return []
   
 # initializing the NN
-batch_size = 8
-learning_rate = 5e-2
-learning_rate_decay = 8e-4
+batch_size = 2
+learning_rate = 1e-2
+learning_rate_decay = 1e-3
+learning_rate_decay_2 = 1e-4
 num_of_epochs = 100_000
 
 layers = [
@@ -201,8 +202,10 @@ else:
 
       loss.backward()
 
-      if epoch > 80_000:
+      if epoch > 20_000:
         learning_rate = learning_rate_decay
+      if epoch > 70_000:
+        learning_rate = learning_rate_decay_2
 
       for p in params:
         p.data -= p.grad * learning_rate
