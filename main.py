@@ -15,7 +15,7 @@ def sort_key(filename):
     cls, idx = map(int, name.split('.'))
     return (cls, idx)
 
-all_files = sorted(os.listdir("images"), key=sort_key)[:100000]
+all_files = sorted(os.listdir("images"), key=sort_key)[:10000]
 
 # extracting indices from filenames
 index_to_file = {}
@@ -105,11 +105,11 @@ class ReLU:
     return []
   
 # initializing the NN
-batch_size = 2
-learning_rate = 1e-2
-learning_rate_decay = 1e-3
-learning_rate_decay_2 = 1e-4
-num_of_epochs = 100_000
+batch_size = 8
+learning_rate = 3e-3
+learning_rate_decay = 1e-4
+num_of_epochs = 20_000
+l2_scale = 0 #0.001
 
 layers = [
   Conv(num_of_kernels=96, channels_in=3, kernel_size=11, stride=4, padding=0, weights_file_name="layer_0"), ReLU(), Pooling(kernel_size=3, stride=2),
@@ -171,6 +171,7 @@ if (evaluation_mode):
   logits, image_batch, ans = get_eval_result(range(len(test_images['image'])), test_images)
 
   loss = torch.nn.functional.cross_entropy(logits, ans)
+  loss += l2_scale * sum(p.pow(2).sum() for p in params)
   print("eval loss =", loss)
 
   preds = torch.argmax(logits, dim=1)
@@ -202,10 +203,8 @@ else:
 
       loss.backward()
 
-      if epoch > 20_000:
+      if epoch > 50_000:
         learning_rate = learning_rate_decay
-      if epoch > 70_000:
-        learning_rate = learning_rate_decay_2
 
       for p in params:
         p.data -= p.grad * learning_rate
