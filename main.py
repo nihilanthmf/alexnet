@@ -108,8 +108,8 @@ class ReLU:
 batch_size = 8
 learning_rate = 3e-3
 learning_rate_decay = 1e-4
-num_of_epochs = 20_000
-l2_scale = 0 #0.001
+num_of_epochs = 30_000
+l2_scale = 0.01
 
 layers = [
   Conv(num_of_kernels=96, channels_in=3, kernel_size=11, stride=4, padding=0, weights_file_name="layer_0"), ReLU(), Pooling(kernel_size=3, stride=2),
@@ -141,7 +141,7 @@ def forward(image_batch):
 
 training_loss_valuse = []
 eval_loss_values = []
-eval_images = load_eval_images()[:5000]
+eval_images = load_eval_images()[:1000]
 
 current_training_loss_values=[]
 current_eval_loss_values=[]
